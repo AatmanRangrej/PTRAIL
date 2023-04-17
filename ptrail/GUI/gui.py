@@ -8,10 +8,10 @@
 import sys
 
 from PyQt5 import QtCore, QtWidgets, QtGui, QtWebEngineWidgets
-from PyQt5.QtWidgets import QSizePolicy
+from PyQt5.QtWidgets import QSizePolicy, QMessageBox
 
 from ptrail.GUI.handler import GuiHandler
-
+from ptrail.GUI.descriptions_texts import  *
 
 # TODO: The application crashes when we cancel file upload and try to upload a different file.
 class Ui_MainWindow(QtWidgets.QMainWindow):
@@ -26,6 +26,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.VersionInfoButton = None
         self.QuitButton = None
         self.OpenButton = None
+        self.QuitConfirm = None
         self.SaveButton = None
         self.menuAbout = None
         self.FileMenu = None
@@ -142,6 +143,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.open_btn = QtWidgets.QPushButton("Open File")
         self.open_btn.clicked.connect(self.open_file)
         self.open_btn.resize(150, 50)
+        self.open_btn.setToolTip(open_file_btn)
         self.MapPane.addWidget(self.open_btn)
 
         self.vlayout.addWidget(self.maplayoutmanager, 0, 1, 3, 2)
@@ -161,18 +163,31 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.CommandPalette.setContentsMargins(0, 0, 0, 0)
         self.CommandPalette.setObjectName("CommandPalette")
 
+
         # ---------------------------------------------------------------------------------- #
         # Declare the list containing the features and then individual lists of all features.
         feature_types = [
             'Kinematic Features', 'Temporal Features', 'Filtering', 'Interpolation', 'Statistics'
         ]
+        feature_types = sorted(feature_types)
+
+
+
 
         newVLayout = QtWidgets.QVBoxLayout()
         # ------------------- Feature Selection List ---------------------- #
         self.featureType = QtWidgets.QComboBox()
-        self.featureType.addItems(sorted(feature_types))
+        self.featureType.addItems(feature_types)
         self.featureType.setFont(QtGui.QFont('Tahoma', 12))
         self.featureType.currentIndexChanged.connect(self.add_tree_options)
+
+        # adding top tip (hover texts) in dropdown items
+        self.featureType.setToolTip(module_selection_combobox)
+        for i in range(len(feature_types)):
+            self.featureType.setItemData(i, feature_descriptions.get(feature_types[i]), QtCore.Qt.ToolTipRole)
+
+
+
         newVLayout.addWidget(self.featureType)
 
         # ------------------- Multi Selection Widget ----------------------#
@@ -190,6 +205,11 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.featureListWidget.setFont(QtGui.QFont('Tahoma', 12))
         self.featureListWidget.setUniformItemSizes(True)
         self.featureListWidget.item(0).setSelected(True)
+
+        # adding top tip (hover texts) in features items
+        for i in range(len(filt_features)):
+            self.featureListWidget.item(i).setToolTip(filt_features_descriptions.get(filt_features[i]))
+
         newVLayout.addWidget(self.featureListWidget)
 
         # ------------- Add the run commands button. --------------------- #
@@ -238,14 +258,25 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         # feature selection.
         if self.featureType.currentIndex() == 0:
             self.featureListWidget.addItems(filt_features)
+            for i in range(len(filt_features)):     # adding top tip (hover texts) in features items
+                self.featureListWidget.item(i).setToolTip(filt_features_descriptions.get(filt_features[i]))
         elif self.featureType.currentIndex() == 1:
             self.featureListWidget.addItems(ip_features)
+            for i in range(len(ip_features)):
+                self.featureListWidget.item(i).setToolTip(ip_features_descriptions.get(ip_features[i]))
         elif self.featureType.currentIndex() == 2:
             self.featureListWidget.addItems(kinematic_features)
+            for i in range(len(kinematic_features)):
+                self.featureListWidget.item(i).setToolTip(kinematic_features_descriptions.get(kinematic_features[i]))
         elif self.featureType.currentIndex() == 3:
             self.featureListWidget.addItems(stat_features)
+            for i in range(len(stat_features)):
+                self.featureListWidget.item(i).setToolTip(stat_features_descriptions.get(stat_features[i]))
         else:
             self.featureListWidget.addItems(temporal_features)
+            for i in range(len(temporal_features)):
+                self.featureListWidget.item(i).setToolTip(temporal_features_descriptions.get(temporal_features[i]))
+
 
         self.featureListWidget.setFont(QtGui.QFont('Tahoma', 12))
         self.featureListWidget.item(0).setSelected(True)
@@ -282,9 +313,14 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.FileMenu.addAction(self.SaveButton)
 
         self.FileMenu.addSeparator()
+
+
+
+
         # Create the quit button of the File Menu and add action listener.
         self.QuitButton = QtWidgets.QAction(self.OuterWindow)
-        self.QuitButton.triggered.connect(QtWidgets.qApp.quit)
+        self.QuitButton.triggered.connect(self.open_quit_confirmDialog)
+        # self.QuitButton.triggered.connect(QtWidgets.qApp.quit)
         self.QuitButton.setShortcut("Alt+F4" if sys.platform != 'darwin' else 'cmd+W')
         self.QuitButton.setObjectName("QuitButton")
         self.FileMenu.addAction(self.QuitButton)
@@ -303,6 +339,32 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         self.MenuBar.addAction(self.FileMenu.menuAction())
         self.MenuBar.addAction(self.menuAbout.menuAction())
         self.OuterWindow.setMenuBar(self.MenuBar)
+
+    def open_quit_confirmDialog(self):
+        dlg = QtWidgets.QMessageBox(self)
+
+        if self.handler is not None:
+            close_btn = dlg.addButton("Close", QtWidgets.QMessageBox.NoRole)
+            save_btn = dlg.addButton("Save", QtWidgets.QMessageBox.NoRole)
+            discard_btn = dlg.addButton("Discard", QtWidgets.QMessageBox.NoRole)
+            save_btn.clicked.connect(self.save_file)
+            close_btn.clicked.connect(self.quit)
+        else:
+            close_btn = dlg.addButton("Close", QtWidgets.QMessageBox.NoRole)
+            discard_btn = dlg.addButton("Discard", QtWidgets.QMessageBox.NoRole)
+            close_btn.clicked.connect(self.quit)
+
+
+        dlg.setIcon(QMessageBox.Question)
+        dlg.setWindowTitle('Confirm Exit')
+        dlg.setText('Are you sure you want to exit?')
+        dlg.exec()
+
+
+
+    def quit(self):
+        self.OuterWindow.close()
+
 
     def retranslateUi(self, OuterWindow):
         """ Auto Generated method by PyQt Designer."""
@@ -326,6 +388,7 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
 
         # Create an export button for the dataset.
         self.exportBtn = QtWidgets.QPushButton("Export Dataframe")
+        self.exportBtn.setToolTip(export_file_btn)
         self.exportBtn.clicked.connect(self.save_file)
         self.dfController.addWidget(self.exportBtn)
 

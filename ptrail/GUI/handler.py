@@ -86,6 +86,8 @@ class GuiHandler:
                 # remove the item from layout
                 self._window.DFPane.removeItem(item)
 
+
+
             col_names = self._get_input_params(labels=['Trajectory ID: ', 'DateTime: ', 'Latitude: ', 'Longitude: '],
                                                title="Enter Column Names",
                                                placeHolder=['Name of Identifier column', 'Name of Timestamp column',
@@ -101,6 +103,7 @@ class GuiHandler:
 
                 # Set the table model and display the dataframe.
                 self._table = QtWidgets.QTableView()
+                self._table.setToolTip('PTRAIL dataframe.')
 
                 # NOTE: whenever we update DFs, make sure to send the data after resetting
                 #       index and setting inplace as False.
