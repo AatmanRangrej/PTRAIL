@@ -344,20 +344,21 @@ class Ui_MainWindow(QtWidgets.QMainWindow):
         dlg = QtWidgets.QMessageBox(self)
 
         if self.handler is not None:
-            close_btn = dlg.addButton("Close", QtWidgets.QMessageBox.NoRole)
             save_btn = dlg.addButton("Save", QtWidgets.QMessageBox.NoRole)
             discard_btn = dlg.addButton("Discard", QtWidgets.QMessageBox.NoRole)
+            close_btn = dlg.addButton("Exit", QtWidgets.QMessageBox.NoRole)
+
             save_btn.clicked.connect(self.save_file)
             close_btn.clicked.connect(self.quit)
         else:
-            close_btn = dlg.addButton("Close", QtWidgets.QMessageBox.NoRole)
+            close_btn = dlg.addButton("Exit", QtWidgets.QMessageBox.NoRole)
             discard_btn = dlg.addButton("Discard", QtWidgets.QMessageBox.NoRole)
             close_btn.clicked.connect(self.quit)
 
 
         dlg.setIcon(QMessageBox.Question)
         dlg.setWindowTitle('Confirm Exit')
-        dlg.setText('Are you sure you want to exit?')
+        dlg.setText('Do you want to save changes to loaded PTRAIL Dataframe?')
         dlg.exec()
 
 
